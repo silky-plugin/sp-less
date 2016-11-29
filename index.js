@@ -102,7 +102,8 @@ exports.registerPlugin = function(cli, options){
 
     getCompileContent(cli, inputFilePath, data, (error, data, content)=>{
       if(data.status == 200){
-        data.outputFilePath = data.outputFilePath.replace(/(\less)$/, "css")
+        data.outputFilePath = data.outputFilePath.replace(/(\less)$/, "css");
+        data.outputFileRelativePath = data.outputFileRelativePath.replace(/(\less)$/, "css")
       }
       cb(error, data, content);
     })
