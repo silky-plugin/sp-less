@@ -32,20 +32,25 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
   let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
   
   //----------- 全局 less 开始 ---------- //
-  let globaleLessContent = [];
-  let lessGlobal = [].concat(_DefaultSetting.global)
-  //获取环境相关全局less，添加到每个less文件后
-  let _env_global = [].concat(_DefaultSetting._env_global)
-  _env_global.forEach((filename)=>{
-    globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
-  })
+  //获取环境配置的global时，可能会报错
+  try{
+    let globaleLessContent = [];
+    let lessGlobal = [].concat(_DefaultSetting.global)
+    //获取环境相关全局less，添加到每个less文件后
+    let _env_global = [].concat(_DefaultSetting._env_global)
+    _env_global.forEach((filename)=>{
+      globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
+    })
 
-  //获取全局less，添加到每个less文件后
-  lessGlobal.forEach((filename)=>{
-     globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd, filename)));
-  });
+    //获取全局less，添加到每个less文件后
+    lessGlobal.forEach((filename)=>{
+      globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd, filename)));
+    });
 
-  fileContent = fileContent + globaleLessContent.join(';');
+    fileContent = fileContent + globaleLessContent.join(';');
+  }catch(e){
+    return cb(e)
+  }
   //----------- 全局 less 结束 ---------- //
 
   _less.render(fileContent, _DefaultSetting.options, (e, result)=>{
@@ -101,11 +106,12 @@ exports.registerPlugin = function(cli, options){
     }
 
     getCompileContent(cli, inputFilePath, data, (error, data, content)=>{
+      if(error){return cb(error)};
       if(data.status == 200){
         data.outputFilePath = data.outputFilePath.replace(/(\less)$/, "css");
         data.outputFileRelativePath = data.outputFileRelativePath.replace(/(\less)$/, "css")
       }
-      cb(error, data, content);
+      cb(null, data, content);
     })
   })
 }
