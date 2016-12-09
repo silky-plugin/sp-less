@@ -39,11 +39,13 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
     //获取环境相关全局less，添加到每个less文件后
     let _env_global = [].concat(_DefaultSetting._env_global)
     _env_global.forEach((filename)=>{
+      if(!filename){return}
       globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
     })
 
     //获取全局less，添加到每个less文件后
     lessGlobal.forEach((filename)=>{
+      if(!filename){return}
       globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd, filename)));
     });
 
