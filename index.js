@@ -9,7 +9,7 @@ const _ = require('lodash');
 var _DefaultSetting = {
   "regexp": "(\.css)$",
   "options":{
-    paths: ['.', _path.join(process.cwd(), 'css')]
+    paths: ['.', _path.join(process.cwd(), 'css'), process.cwd()]
   },
   ignore: [],
   global: [],
@@ -20,6 +20,16 @@ var _DefaultSetting = {
 const isNeedCompile = (pathname)=>{
   let reg = new RegExp(_DefaultSetting.regexp)
   return reg.test(pathname.toLowerCase())
+}
+
+//根据json格式化为less变量
+const getLessVarFromJSON = (json)=>{
+  if(!json){return ""}
+  let queue = [];
+  Object.keys(json).forEach((key)=>{
+    queue.push(`@${key}:"${json[key]}";`)
+  });
+  return queue.join('') 
 }
 
 //根据实际路径获取文件内容
@@ -34,13 +44,18 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
   //----------- 全局 less 开始 ---------- //
   //获取环境配置的global时，可能会报错
   try{
-    let globaleLessContent = [];
+    let globaleLessContent = [fileContent];
     let lessGlobal = [].concat(_DefaultSetting.global)
     //获取环境相关全局less，添加到每个less文件后
     let _env_global = [].concat(_DefaultSetting._env_global)
     _env_global.forEach((filename)=>{
       if(!filename){return}
-      globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
+      if(/(\.less)$/.test(filename)){
+        globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
+      }else{
+        globaleLessContent.push(getLessVarFromJSON(cli.runtime.getRuntimeEnvFile(filename))); 
+      }
+      
     })
 
     //获取全局less，添加到每个less文件后
@@ -49,7 +64,7 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
       globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd, filename)));
     });
 
-    fileContent = fileContent + globaleLessContent.join(';');
+    fileContent =  globaleLessContent.join(';');
   }catch(e){
     return cb(e)
   }
@@ -82,7 +97,7 @@ exports.registerPlugin = function(cli, options){
       return cb(null, data, content)
     }  
     let fakeFilePath = _path.join(process.cwd(), req.path);
-    //替换路径为hbs
+    //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
 
     getCompileContent(cli, realFilePath, data, (error, data, content)=>{
