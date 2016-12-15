@@ -36,11 +36,10 @@ const getLessVarFromJSON = (json)=>{
 const getCompileContent = (cli, realFilePath, data, cb)=>{
   if(!_fs.existsSync(realFilePath)){
     data.status = 404
-    return cb(null, data, null)
+    return cb(null, null)
   }
 
   let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
-  
   //----------- 全局 less 开始 ---------- //
   //获取环境配置的global时，可能会报错
   try{
@@ -69,12 +68,11 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
     return cb(e)
   }
   //----------- 全局 less 结束 ---------- //
-
   _less.render(fileContent, _DefaultSetting.options, (e, result)=>{
     if(e){return cb(e)}
     //编译成功，标记状态码
     data.status = 200;
-    cb(null, data, result.css)
+    cb(null, result.css)
   })
 } 
 
@@ -94,23 +92,23 @@ exports.registerPlugin = function(cli, options){
   cli.registerHook('route:didRequest', (req, data, content, cb)=>{
     //如果不需要编译
     if(!isNeedCompile(req.path)){
-      return cb(null, data, content)
+      return cb(null, content)
     }  
     let fakeFilePath = _path.join(process.cwd(), req.path);
     //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
 
-    getCompileContent(cli, realFilePath, data, (error, data, content)=>{
+    getCompileContent(cli, realFilePath, data, (error, content)=>{
       if(error){return cb(error)};
       //交给下一个处理器
-      cb(null, data, content)
+      cb(null, content)
     })
   })
 
-  cli.registerHook('build:doCompile', (data, content, cb)=>{
+  cli.registerHook('build:doCompile', (buildConfig, data, content, cb)=>{
     let inputFilePath = data.inputFilePath;
     if(!/(\.less)$/.test(inputFilePath)){
-      return cb(null, data, content)
+      return cb(null, content)
     }
 
     _DefaultSetting.ignore = [].concat(_DefaultSetting.global).concat(_DefaultSetting.ignore)
@@ -118,17 +116,17 @@ exports.registerPlugin = function(cli, options){
     if(_DefaultSetting.ignore && _DefaultSetting.ignore.length > 0){
       if(needIgnore(inputFilePath, _DefaultSetting.ignore)){
         data.ignore = true;
-        return cb(null, data, content)
+        return cb(null, content)
       }
     }
 
-    getCompileContent(cli, inputFilePath, data, (error, data, content)=>{
+    getCompileContent(cli, inputFilePath, data, (error, content)=>{
       if(error){return cb(error)};
       if(data.status == 200){
         data.outputFilePath = data.outputFilePath.replace(/(\less)$/, "css");
         data.outputFileRelativePath = data.outputFileRelativePath.replace(/(\less)$/, "css")
       }
-      cb(null, data, content);
+      cb(null, content);
     })
   })
 }
