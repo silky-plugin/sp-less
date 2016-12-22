@@ -29,7 +29,7 @@ const getLessVarFromJSON = (json)=>{
   Object.keys(json).forEach((key)=>{
     queue.push(`@${key}:"${json[key]}";`)
   });
-  return queue.join('') 
+  return queue.join('')
 }
 
 //根据实际路径获取文件内容
@@ -50,11 +50,11 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
     _env_global.forEach((filename)=>{
       if(!filename){return}
       if(/(\.less)$/.test(filename)){
-        globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true)); 
+        globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
       }else{
-        globaleLessContent.push(getLessVarFromJSON(cli.runtime.getRuntimeEnvFile(filename))); 
+        globaleLessContent.push(getLessVarFromJSON(cli.runtime.getRuntimeEnvFile(filename)));
       }
-      
+
     })
 
     //获取全局less，添加到每个less文件后
@@ -74,7 +74,7 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
     data.status = 200;
     cb(null, result.css)
   })
-} 
+}
 
 function needIgnore(filename, ignoreRegList){
   for(let i = 0, length = ignoreRegList.length; i < length; i++){
@@ -88,12 +88,12 @@ function needIgnore(filename, ignoreRegList){
 exports.registerPlugin = function(cli, options){
   //继承定义
   _.extend(_DefaultSetting, options);
-  
+
   cli.registerHook('route:didRequest', (req, data, content, cb)=>{
     //如果不需要编译
     if(!isNeedCompile(req.path)){
       return cb(null, content)
-    }  
+    }
     let fakeFilePath = _path.join(process.cwd(), req.path);
     //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
