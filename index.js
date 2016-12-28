@@ -9,7 +9,7 @@ const _ = require('lodash');
 var _DefaultSetting = {
   "regexp": "(\.css)$",
   "options":{
-    paths: ['.', _path.join(process.cwd(), 'css'), process.cwd()]
+    paths: ['.']
   },
   ignore: [],
   global: [],
@@ -60,7 +60,7 @@ const getCompileContent = (cli, realFilePath, data, cb)=>{
     //获取全局less，添加到每个less文件后
     lessGlobal.forEach((filename)=>{
       if(!filename){return}
-      globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd, filename)));
+      globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd(), filename)));
     });
 
     fileContent =  globaleLessContent.join(';');
@@ -85,16 +85,44 @@ function needIgnore(filename, ignoreRegList){
   return false
 }
 
-exports.registerPlugin = function(cli, options){
-  //继承定义
+
+function setLessOptiosn(cli, options){
   _.extend(_DefaultSetting, options);
 
+  if(_.indexOf(_DefaultSetting.options.paths, cli.cwd()) == -1){
+    _DefaultSetting.options.paths.push(cli.cwd())
+  }
+  if(_.indexOf(_DefaultSetting.options.paths, '.') == -1){
+    _DefaultSetting.options.paths.push('.')
+  }
+  let paths = [];
+  _DefaultSetting.options.paths.forEach((path)=>{
+    if(path == '.'){
+      paths.push(path)
+      return
+    }
+    if(path == cli.cwd()){
+      paths.push(path)
+      return
+    }
+    paths.push(_path.join(cli.cwd(), path))
+  })
+
+  _DefaultSetting.options.paths = paths
+
+}
+
+exports.registerPlugin = function(cli, options){
+  //继承定义
+  setLessOptiosn(cli, options)
+
   cli.registerHook('route:didRequest', (req, data, content, cb)=>{
+
     //如果不需要编译
     if(!isNeedCompile(req.path)){
       return cb(null, content)
     }
-    let fakeFilePath = _path.join(process.cwd(), req.path);
+    let fakeFilePath = _path.join(cli.cwd(), req.path);
     //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
 
