@@ -1,12 +1,12 @@
 {
   "name": "sp-less",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "index.js",
   "author": "",
   "license": "MIT",
   "scripts": {
-    "prepublish": "npm shrinkwrap"    
+    "prepublish": "npm shrinkwrap"
   },
   "dependencies": {
     "less": "^2.7.1",
