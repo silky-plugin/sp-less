@@ -45,7 +45,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   //如果less中包含公共组件
   if(realFilePath.indexOf(pubModulesDir) != -1){
     //获取组建名称
-    let filePathSplitArray = realFilePath.split('/')
+    let filePathSplitArray = realFilePath.split(_path.sep)
     let moduleName = filePathSplitArray[_.indexOf(filePathSplitArray, pubModulesDir) + 1]
     if(isDev){
       globalLessContent.push(`@__pub:"/${pubModulesDir}/${moduleName}/images"`)
