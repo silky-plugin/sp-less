@@ -12,8 +12,7 @@ var _DefaultSetting = {
     paths: ['.']
   },
   ignore: [],
-  global: [],
-  _golbal: []
+  global: []
 }
 
 //判断该文件是否需要处理
@@ -33,43 +32,67 @@ const getLessVarFromJSON = (json)=>{
 }
 
 //根据实际路径获取文件内容
-const getCompileContent = (cli, realFilePath, data, cb)=>{
+const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   if(!_fs.existsSync(realFilePath)){
     data.status = 404
     return cb(null, null)
   }
 
   let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
+  let globalLessContent = []
+  //----- 服务 node_modules less的image------ start
+  let pubModulesDir = cli.options.pubModulesDir
+  //如果less中包含公共组件
+  if(realFilePath.indexOf(pubModulesDir) != -1){
+    //获取组建名称
+    let filePathSplitArray = realFilePath.split('/')
+    let moduleName = filePathSplitArray[_.indexOf(filePathSplitArray, pubModulesDir) + 1]
+    if(isDev){
+      globalLessContent.push(`@__pub:"/${pubModulesDir}/${moduleName}/images"`)
+    }else{
+      globalLessContent.push(`@__pub:"@{__imageRoot}/${moduleName}"`)
+      globalLessContent.push(`@__imageRoot: "/images"`)
+    }
+  }
+  //----- 服务 node_modules less的image ------ END
+
   //----------- 全局 less 开始 ---------- //
   //获取环境配置的global时，可能会报错
   try{
-    let globaleLessContent = [fileContent];
-    let lessGlobal = [].concat(_DefaultSetting.global)
     //获取环境相关全局less，添加到每个less文件后
-    let _env_global = [].concat(_DefaultSetting._env_global)
-    _env_global.forEach((filename)=>{
+    let _global = [].concat(_DefaultSetting.global)
+    
+    _global.forEach((filename)=>{
       if(!filename){return}
-      if(/(\.less)$/.test(filename)){
-        globaleLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
-      }else{
-        globaleLessContent.push(getLessVarFromJSON(cli.runtime.getRuntimeEnvFile(filename)));
+      //less公共库
+      if(filename.indexOf('.') == -1){
+        let publicLibIndex = cli.getPublicLibIndex(filename)
+        if(!publicLibIndex){
+          throw new Error(`sp-less 找不到 公共库 ${filename}`)
+        }
+        globalLessContent.push(`@${filename}: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex)}"`)
+        return
       }
-
+      if(/(\.less)$/.test(filename)){
+        globalLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
+        return
+      }
+      if(/(\.js)$/.test(filename)){
+        globalLessContent.push(getLessVarFromJSON(cli.runtime.getRuntimeEnvFile(filename)));
+        return
+      }
     })
-
-    //获取全局less，添加到每个less文件后
-    lessGlobal.forEach((filename)=>{
-      if(!filename){return}
-      globaleLessContent.push(_fs.readFileSync(_path.join(cli.cwd(), filename)));
-    });
-
-    fileContent =  globaleLessContent.join(';');
+    globalLessContent.push(fileContent);
+    fileContent =  globalLessContent.join(';');
   }catch(e){
     return cb(e)
   }
   //----------- 全局 less 结束 ---------- //
   _less.render(fileContent, _DefaultSetting.options, (e, result)=>{
-    if(e){return cb(e)}
+    if(e){
+      console.log(e)
+      return cb(e)
+    }
     //编译成功，标记状态码
     data.status = 200;
     cb(null, result.css)
@@ -117,7 +140,6 @@ exports.registerPlugin = function(cli, options){
   setLessOptiosn(cli, options)
 
   cli.registerHook('route:didRequest', (req, data, content, cb)=>{
-
     //如果不需要编译
     if(!isNeedCompile(req.path)){
       return cb(null, content)
@@ -126,7 +148,7 @@ exports.registerPlugin = function(cli, options){
     //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
 
-    getCompileContent(cli, realFilePath, data, (error, content)=>{
+    getCompileContent(cli, realFilePath, data, true, (error, content)=>{
       if(error){return cb(error)};
       //交给下一个处理器
       cb(null, content)
@@ -148,7 +170,7 @@ exports.registerPlugin = function(cli, options){
       }
     }
 
-    getCompileContent(cli, inputFilePath, data, (error, content)=>{
+    getCompileContent(cli, inputFilePath, data, false, (error, content)=>{
       if(error){return cb(error)};
       if(data.status == 200){
         data.outputFilePath = data.outputFilePath.replace(/(\less)$/, "css");
