@@ -67,10 +67,12 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
       //less公共库
       if(filename.indexOf('.') == -1){
         let publicLibIndex = cli.getPublicLibIndex(filename)
-        if(!publicLibIndex){
-          throw new Error(`sp-less 找不到 公共库 ${filename}`)
+        if(publicLibIndex){
+          globalLessContent.push(`@${filename}_all: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex)}"`)
+        }else{
+           cli.log.warn(`less库 ${filename} 没有指定入口文件， 无法使用 import "@{${filename}_all}"`.yellow)
         }
-        globalLessContent.push(`@${filename}: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex)}"`)
+        globalLessContent.push(`@${filename}: "${cli.getPublicLibDir(filename)}"`)
         return
       }
       if(/(\.less)$/.test(filename)){
