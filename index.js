@@ -75,6 +75,16 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         globalLessContent.push(`@${filename}: "${cli.getPublicLibDir(filename)}"`)
         return
       }
+
+      //less公共库指定全局文件
+      if(filename.indexOf('/') != -1){
+        let pubModuleGlobalFileArray = filename.split('/');
+        let pubModuleName = pubModuleGlobalFileArray.shift();
+        let pubModuleDir = cli.getPublicLibDir(pubModuleName);
+        //TODO
+        return
+      }
+
       if(/(\.less)$/.test(filename)){
         globalLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
         return
