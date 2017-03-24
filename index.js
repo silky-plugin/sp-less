@@ -64,6 +64,20 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
     
     _global.forEach((filename)=>{
       if(!filename){return}
+
+      //less公共库指定全局文件
+      if(filename.indexOf('/') != -1){
+        let pubModuleGlobalFileArray = filename.split('/');
+        let pubModuleName = pubModuleGlobalFileArray.shift();
+        let pubModuleDir = cli.getPublicLibDir(pubModuleName);
+        let beAddEveryFileBehindFilePath = _path.join(cli.cwd(), pubModuleDir, pubModuleGlobalFileArray.join(_path.sep))
+        if(!_fs.existsSync(beAddEveryFileBehindFilePath)){
+          throw new Error(`Cannot find public module ${pubModuleName}'s file ${pubModuleGlobalFileArray.join('/')}`)
+        }
+        globalLessContent.push(_fs.readFileSync(beAddEveryFileBehindFilePath, 'utf8'));
+        return
+      }
+
       //less公共库
       if(filename.indexOf('.') == -1){
         let publicLibIndex = cli.getPublicLibIndex(filename)
@@ -76,14 +90,6 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         return
       }
 
-      //less公共库指定全局文件
-      if(filename.indexOf('/') != -1){
-        let pubModuleGlobalFileArray = filename.split('/');
-        let pubModuleName = pubModuleGlobalFileArray.shift();
-        let pubModuleDir = cli.getPublicLibDir(pubModuleName);
-        //TODO
-        return
-      }
 
       if(/(\.less)$/.test(filename)){
         globalLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
