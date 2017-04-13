@@ -9,7 +9,7 @@ const _ = require('lodash');
 var _DefaultSetting = {
   "regexp": "(\.css)$",
   "options":{
-    paths: ['.']
+    paths: []
   },
   ignore: [],
   global: []
@@ -78,7 +78,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         return
       }
 
-      //less公共库
+      //less公共库 ["csslab"]不带文件后缀
       if(filename.indexOf('.') == -1){
         let publicLibIndex = cli.getPublicLibIndex(filename)
         if(publicLibIndex){
@@ -105,8 +105,16 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   }catch(e){
     return cb(e)
   }
+
+  
+  //添加文件相对路径 编译时 import 导入相对路径
+  let lessOptions = _.extend({},  _DefaultSetting.options)
+  if(_.indexOf(lessOptions.paths, _path.dirname(realFilePath)) == -1){
+    lessOptions.paths.push(_path.dirname(realFilePath))
+  }
+
   //----------- 全局 less 结束 ---------- //
-  _less.render(fileContent, _DefaultSetting.options, (e, result)=>{
+  _less.render(fileContent, lessOptions, (e, result)=>{
     if(e){
       console.log(e)
       return cb(e)
@@ -119,6 +127,8 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
 
 function needIgnore(filename, ignoreRegList){
   for(let i = 0, length = ignoreRegList.length; i < length; i++){
+    //兼容windows 文件路径判断
+    filename = filename.replace(/(\\)+/g, "/")
     if(new RegExp(ignoreRegList[i]).test(filename)){
       return true
     }

@@ -44,4 +44,8 @@
 ### ignore
 符合正则表达式的string字符串。 一般作为模块组件的less文件，使用这个字段标记，避免编译组件到`build`文件夹内。 上述`global`引用的文件将自动加入到`ignore`中来。
 
+### 历史记录见
+
+  [RELEASE.md](./RELEASE.md)
+
 
