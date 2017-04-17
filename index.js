@@ -74,7 +74,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         if(!_fs.existsSync(beAddEveryFileBehindFilePath)){
           throw new Error(`Cannot find public module ${pubModuleName}'s file ${pubModuleGlobalFileArray.join('/')}`)
         }
-        globalLessContent.push(_fs.readFileSync(beAddEveryFileBehindFilePath, 'utf8'));
+        globalLessContent.push(`@import: url("${_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)).replace(/\\/g, "/")}");`)
         return
       }
 
@@ -82,11 +82,11 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
       if(filename.indexOf('.') == -1){
         let publicLibIndex = cli.getPublicLibIndex(filename)
         if(publicLibIndex){
-          globalLessContent.push(`@${filename}_all: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex)}"`)
+          globalLessContent.push(`@${filename}_all: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex).replace(/\\/g, "/")}"`)
         }else{
            cli.log.warn(`less库 ${filename} 没有指定入口文件， 无法使用 import "@{${filename}_all}"`.yellow)
         }
-        globalLessContent.push(`@${filename}: "${cli.getPublicLibDir(filename)}"`)
+        globalLessContent.push(`@${filename}: "${cli.getPublicLibDir(filename).replace(/\\/g, "/")}"`)
         return
       }
 
