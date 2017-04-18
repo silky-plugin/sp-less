@@ -30,6 +30,18 @@ const getLessVarFromJSON = (json)=>{
   });
   return queue.join('')
 }
+//添加公共库less模块公共变量
+const getAddPubVarFunc= (isDev, globalLessContent)=>{
+  return (pubModulesDir, moduleName, isPublib)=>{
+    if(!isDev){
+      globalLessContent.push(`@__imageRoot: "/images"`)
+    }
+    let varNameList = isPublib ? ["__pub", moduleName] : [moduleName]
+    varNameList.forEach((name)=>{
+      globalLessContent.push(isDev ? `@${name}_img:"/${pubModulesDir}/${moduleName}/images"`: `@${name}_img:"@{__imageRoot}/${moduleName}"`)
+    })
+  }
+}
 
 //根据实际路径获取文件内容
 const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
@@ -37,9 +49,9 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
     data.status = 404
     return cb(null, null)
   }
-
   let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
   let globalLessContent = []
+  let pushPubVarFunc = getAddPubVarFunc(isDev, globalLessContent)
   //----- 服务 node_modules less的image------ start
   let pubModulesDir = cli.options.pubModulesDir
   //如果less中包含公共组件
@@ -47,12 +59,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
     //获取组建名称
     let filePathSplitArray = realFilePath.split(_path.sep)
     let moduleName = filePathSplitArray[_.indexOf(filePathSplitArray, pubModulesDir) + 1]
-    if(isDev){
-      globalLessContent.push(`@__pub:"/${pubModulesDir}/${moduleName}/images"`)
-    }else{
-      globalLessContent.push(`@__pub:"@{__imageRoot}/${moduleName}"`)
-      globalLessContent.push(`@__imageRoot: "/images"`)
-    }
+    pushPubVarFunc(pubModulesDir, moduleName, true)
   }
   //----- 服务 node_modules less的image ------ END
 
@@ -65,7 +72,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
     _global.forEach((filename)=>{
       if(!filename){return}
 
-      //less公共库指定全局文件
+      //less公共库指定了 必须添夹到每个文件后的全局文件
       if(filename.indexOf('/') != -1){
         let pubModuleGlobalFileArray = filename.split('/');
         let pubModuleName = pubModuleGlobalFileArray.shift();
@@ -74,23 +81,25 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         if(!_fs.existsSync(beAddEveryFileBehindFilePath)){
           throw new Error(`Cannot find public module ${pubModuleName}'s file ${pubModuleGlobalFileArray.join('/')}`)
         }
+        pushPubVarFunc(pubModuleDir, pubModuleName)
         globalLessContent.push(`@import "${_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)).replace(/\\/g, "/")}";`)
         return
       }
 
-      //less公共库 ["csslab"]不带文件后缀
+      //less公共库 ["csslab"]不带文件后缀， 仅添加引用变量，不添加文件内容 
       if(filename.indexOf('.') == -1){
+        let pubModuleName = filename
         let publicLibIndex = cli.getPublicLibIndex(filename)
+        let pubModuleDir = cli.getPublicLibDir(pubModuleName);
         if(publicLibIndex){
-          globalLessContent.push(`@${filename}_all: "${_path.join(cli.getPublicLibDir(filename), publicLibIndex).replace(/\\/g, "/")}"`)
+          globalLessContent.push(`@${pubModuleName}_all: "${_path.join(pubModuleDir, publicLibIndex).replace(/\\/g, "/")}"`)
         }else{
-           cli.log.warn(`less库 ${filename} 没有指定入口文件， 无法使用 import "@{${filename}_all}"`.yellow)
+           cli.log.warn(`less库 ${pubModuleName} 没有指定入口文件， 无法使用 import "@{${pubModuleName}_all}"`.yellow)
         }
-        globalLessContent.push(`@${filename}: "${cli.getPublicLibDir(filename).replace(/\\/g, "/")}"`)
+        pushPubVarFunc(pubModuleDir, pubModuleName)
+        globalLessContent.push(`@${pubModuleName}: "${pubModuleDir.replace(/\\/g, "/")}"`)
         return
       }
-
-
       if(/(\.less)$/.test(filename)){
         globalLessContent.push(cli.runtime.getRuntimeEnvFile(filename, true));
         return
@@ -105,7 +114,6 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   }catch(e){
     return cb(e)
   }
-
   
   //添加文件相对路径 编译时 import 导入相对路径
   let lessOptions = _.extend({},  _DefaultSetting.options)
