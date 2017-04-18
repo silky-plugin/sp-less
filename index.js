@@ -74,7 +74,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         if(!_fs.existsSync(beAddEveryFileBehindFilePath)){
           throw new Error(`Cannot find public module ${pubModuleName}'s file ${pubModuleGlobalFileArray.join('/')}`)
         }
-        globalLessContent.push(`@import: url("${_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)).replace(/\\/g, "/")}");`)
+        globalLessContent.push(`@import "${_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)).replace(/\\/g, "/")}";`)
         return
       }
 
