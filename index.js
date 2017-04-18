@@ -21,6 +21,8 @@ const isNeedCompile = (pathname)=>{
   return reg.test(pathname.toLowerCase())
 }
 
+const converToUrl = (pathname)=>{return pathname.replace(/(\\)+/g, "/")}
+
 //根据json格式化为less变量
 const getLessVarFromJSON = (json)=>{
   if(!json){return ""}
@@ -38,7 +40,7 @@ const getAddPubVarFunc= (isDev, globalLessContent)=>{
     }
     let varNameList = isPublib ? ["__pub", moduleName] : [moduleName]
     varNameList.forEach((name)=>{
-      globalLessContent.push(isDev ? `@${name}_img:"/${pubModulesDir}/${moduleName}/images"`: `@${name}_img:"@{__imageRoot}/${moduleName}"`)
+      globalLessContent.push(isDev ? `@${name}_img:"/${converToUrl(pubModulesDir)}/images"`: `@${name}_img:"@{__imageRoot}/${moduleName}"`)
     })
   }
 }
@@ -82,7 +84,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
           throw new Error(`Cannot find public module ${pubModuleName}'s file ${pubModuleGlobalFileArray.join('/')}`)
         }
         pushPubVarFunc(pubModuleDir, pubModuleName)
-        globalLessContent.push(`@import "${_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)).replace(/\\/g, "/")}";`)
+        globalLessContent.push(`@import "${converToUrl(_path.join(pubModuleDir, pubModuleGlobalFileArray.join(_path.sep)))}";`)
         return
       }
 
@@ -92,12 +94,12 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
         let publicLibIndex = cli.getPublicLibIndex(filename)
         let pubModuleDir = cli.getPublicLibDir(pubModuleName);
         if(publicLibIndex){
-          globalLessContent.push(`@${pubModuleName}_all: "${_path.join(pubModuleDir, publicLibIndex).replace(/\\/g, "/")}"`)
+          globalLessContent.push(`@${pubModuleName}_all: "${converToUrl(_path.join(pubModuleDir, publicLibIndex))}"`)
         }else{
            cli.log.warn(`less库 ${pubModuleName} 没有指定入口文件， 无法使用 import "@{${pubModuleName}_all}"`.yellow)
         }
         pushPubVarFunc(pubModuleDir, pubModuleName)
-        globalLessContent.push(`@${pubModuleName}: "${pubModuleDir.replace(/\\/g, "/")}"`)
+        globalLessContent.push(`@${pubModuleName}: "${converToUrl(pubModuleDir)}"`)
         return
       }
       if(/(\.less)$/.test(filename)){
@@ -136,7 +138,7 @@ const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
 function needIgnore(filename, ignoreRegList){
   for(let i = 0, length = ignoreRegList.length; i < length; i++){
     //兼容windows 文件路径判断
-    filename = filename.replace(/(\\)+/g, "/")
+    filename = converToUrl(filename)
     if(new RegExp(ignoreRegList[i]).test(filename)){
       return true
     }
