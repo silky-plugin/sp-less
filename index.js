@@ -38,7 +38,7 @@ const getAddPubVarFunc= (isDev, globalLessContent)=>{
     if(!isDev){
       globalLessContent.push(`@__imageRoot: "/images"`)
     }
-    globalLessContent.push(isDev ? `@${moduleName}_img:"/${converToUrl(pubModulesDir)}/images"`: `@${moduleName}_img:"@{__imageRoot}/${moduleName}"`)
+    globalLessContent.push(isDev ? `@${moduleName}_img:"/${converToUrl(pubModulesDir)}/${moduleName}/images"`: `@${moduleName}_img:"@{__imageRoot}/${moduleName}"`)
   }
 }
 
