@@ -38,10 +38,7 @@ const getAddPubVarFunc= (isDev, globalLessContent)=>{
     if(!isDev){
       globalLessContent.push(`@__imageRoot: "/images"`)
     }
-    let varNameList = isPublib ? ["__pub", moduleName] : [moduleName]
-    varNameList.forEach((name)=>{
-      globalLessContent.push(isDev ? `@${name}_img:"/${converToUrl(pubModulesDir)}/images"`: `@${name}_img:"@{__imageRoot}/${moduleName}"`)
-    })
+    globalLessContent.push(isDev ? `@${moduleName}_img:"/${converToUrl(pubModulesDir)}/images"`: `@${moduleName}_img:"@{__imageRoot}/${moduleName}"`)
   }
 }
 
