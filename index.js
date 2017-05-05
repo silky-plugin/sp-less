@@ -45,7 +45,6 @@ const getAddPubVarFunc= (isDev, globalLessContent)=>{
 //根据实际路径获取文件内容
 const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   if(!_fs.existsSync(realFilePath)){
-    data.status = 404
     return cb(null, null)
   }
   let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
@@ -183,8 +182,11 @@ exports.registerPlugin = function(cli, options){
     //替换路径为less
     let realFilePath = fakeFilePath.replace(/(css)$/,'less')
 
-    getCompileContent(cli, realFilePath, data, true, (error, content)=>{
+    getCompileContent(cli, realFilePath, data, true, (error, compileContent)=>{
       if(error){return cb(error)};
+      if(compileContent){
+        content = compileContent
+      }
       //交给下一个处理器
       cb(null, content)
     })
