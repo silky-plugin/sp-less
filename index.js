@@ -36,9 +36,9 @@ const getLessVarFromJSON = (json)=>{
 const getAddPubVarFunc= (isDev, globalLessContent)=>{
   return (pubModulesDir, moduleName, isPublib)=>{
     if(!isDev){
-      globalLessContent.push(`@__imageRoot: "/images"`)
+      globalLessContent.push(`@__imageRoot: "/image"`)
     }
-    globalLessContent.push(isDev ? `@${moduleName}_img:"/${converToUrl(pubModulesDir)}/${moduleName}/images"`: `@${moduleName}_img:"@{__imageRoot}/${moduleName}"`)
+    globalLessContent.push(isDev ? `@${moduleName}_img:"/${converToUrl(pubModulesDir)}/${moduleName}/image"`: `@${moduleName}_img:"@{__imageRoot}/${moduleName}"`)
   }
 }
 
