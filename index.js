@@ -42,12 +42,22 @@ const getAddPubVarFunc= (isDev, globalLessContent)=>{
   }
 }
 
-//根据实际路径获取文件内容
 const getCompileContent = (cli, realFilePath, data, isDev, cb)=>{
   if(!_fs.existsSync(realFilePath)){
     return cb(null, null)
   }
-  let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
+  _fs.readFile(realFilePath, {encoding: 'utf8'}, (error, fileContent)=>{
+    if(error){
+      return cb(error)
+    }
+    compileContent(cli, fileContent, realFilePath, data, isDev, cb)
+  })
+}
+
+//根据实际路径获取文件内容
+const compileContent = (cli, fileContent, realFilePath, data, isDev, cb)=>{
+  
+ //let fileContent = _fs.readFileSync(realFilePath, {encoding: 'utf8'})
   let globalLessContent = []
   let pushPubVarFunc = getAddPubVarFunc(isDev, globalLessContent)
   //----- 服务 node_modules less的image------ start

@@ -9,7 +9,7 @@
     "prepublish": "npm shrinkwrap"
   },
   "dependencies": {
-    "less": "^2.7.1",
+    "less": "^2.7.2",
     "lodash": "^4.16.5"
   }
 }
