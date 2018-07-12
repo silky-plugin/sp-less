@@ -124,7 +124,7 @@ const compileContent = (cli, fileContent, realFilePath, data, isDev, cb)=>{
   }
   
   //添加文件相对路径 编译时 import 导入相对路径
-  let lessOptions = _.extend({},  _DefaultSetting.options)
+  let lessOptions = _.cloneDeep(_DefaultSetting.options)
   if(_.indexOf(lessOptions.paths, _path.dirname(realFilePath)) == -1){
     lessOptions.paths.push(_path.dirname(realFilePath))
   }
