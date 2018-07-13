@@ -130,14 +130,21 @@ const compileContent = (cli, fileContent, realFilePath, data, isDev, cb)=>{
   }
 
   //----------- 全局 less 结束 ---------- //
-  _less.render(fileContent, lessOptions, (e, result)=>{
-    if(e){
-      console.log(e)
-      return cb(e)
-    }
-    //编译成功，标记状态码
+  // _less.render(fileContent, lessOptions, (e, result)=>{
+  //   if(e){
+  //     console.log(e)
+  //     return cb(e)
+  //   }
+  //   //编译成功，标记状态码
+  //   data.status = 200;
+  //   cb(null, result.css)
+  // })
+  _less.render(fileContent, lessOptions).then((result)=>{
     data.status = 200;
     cb(null, result.css)
+  }).catch((e)=>{
+    console.log(e)
+    cb(e)
   })
 }
 
