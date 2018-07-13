@@ -5,9 +5,7 @@
   "main": "index.js",
   "author": "",
   "license": "MIT",
-  "scripts": {
-    "prepublish": "npm shrinkwrap"
-  },
+  "scripts": {},
   "dependencies": {
     "less": "^2.7.2",
     "lodash": "^4.16.5"
